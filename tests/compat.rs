@@ -1,6 +1,20 @@
 use rsomics_bed_len::lengths;
 use std::io::Cursor;
 
+// Differential against the canonical BED-length reference: GNU awk
+//   awk 'BEGIN{OFS="\t"} !/^#/ && NF>=3 {print $0, $3-$2; next} {print}'
+// run on tests/golden/input.bed. awk reproduces $0 verbatim and appends the
+// length with OFS=tab, which is byte-identical to our output on a tab-separated
+// fixture — no normalization needed.
+#[test]
+fn matches_awk_golden() {
+    let input = include_str!("golden/input.bed");
+    let expected = include_str!("golden/bed-len.upstream.expected");
+    let mut out = Vec::new();
+    lengths(Cursor::new(input), &mut out).unwrap();
+    assert_eq!(String::from_utf8(out).unwrap(), expected);
+}
+
 #[test]
 fn basic_lengths() {
     let input = "chr1\t100\t200\tfeat1\nchr2\t0\t50\n";
